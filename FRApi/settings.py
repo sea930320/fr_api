@@ -24,7 +24,7 @@ SECRET_KEY = '!4+&$s4omr7(l*kfk3ife7a#lfl44-!4^oyh)q0r-pvu9u-&yh'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'FRApi.wsgi.application'
 HOST = 'localhost'
 DB_NAME = 'frapi_2019'
 DB_USER = 'root'
-DB_PWD = ''
+DB_PWD = 'Qwerty12#'
 
 DATABASES = {
     # 'default': {
