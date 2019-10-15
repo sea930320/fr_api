@@ -3,7 +3,6 @@ from django.contrib.auth import authenticate
 
 from .models import User
 
-
 class RegistrationSerializer(serializers.ModelSerializer):
     """Serializers registration requests and creates a new user."""
 
@@ -28,7 +27,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Use the `create_user` method we wrote earlier to create a new user.
         return User.objects.create_user(**validated_data)
-
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.CharField(max_length=255)
@@ -90,7 +88,6 @@ class LoginSerializer(serializers.Serializer):
             'token': user.token
         }
 
-
 class UserSerializer(serializers.ModelSerializer):
     """Handles serialization and deserialization of User objects."""
 
@@ -104,9 +101,11 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True
     )
 
+    user_datasets = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+
     class Meta:
         model = User
-        fields = ('email', 'username', 'password', 'token',)
+        fields = ('email', 'username', 'password', 'user_datasets')
 
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password

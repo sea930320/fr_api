@@ -93,3 +93,5 @@ venv
 
 ### additional files
 .idea
+media
+core/.facenet_model
