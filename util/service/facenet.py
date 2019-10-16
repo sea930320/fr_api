@@ -16,6 +16,7 @@ def align_face(pnet, rnet, onet, image, image_size=160, margin=11):
     img_size = np.asarray(img.shape)[0:2]
     bounding_boxes, _ = detect_face.detect_face(
         img, minsize, pnet, rnet, onet, threshold, factor)
+    print (bounding_boxes)
     prewhitens = []
     for (i, bounding_box) in enumerate(bounding_boxes):
         det = np.squeeze(bounding_box[0:4])
@@ -30,13 +31,14 @@ def align_face(pnet, rnet, onet, image, image_size=160, margin=11):
         prewhiten = facenet.prewhiten(aligned)
         prewhitens.append(prewhiten)
         break
-    return (prewhitens, bounding_boxes)
+    return (prewhitens, bounding_boxes[:1])
 
 def align_opencv_face(pnet, rnet, onet, cvimg, image_size=160, margin=11):
-    img = cvimg
+    img = cvimg[:, :, ::-1]
     img_size = np.asarray(img.shape)[0:2]
     bounding_boxes, _ = detect_face.detect_face(
         img, minsize, pnet, rnet, onet, threshold, factor)
+    print (bounding_boxes)
     prewhitens = []
     for (i, bounding_box) in enumerate(bounding_boxes):
         det = np.squeeze(bounding_box[0:4])
@@ -51,7 +53,7 @@ def align_opencv_face(pnet, rnet, onet, cvimg, image_size=160, margin=11):
         prewhiten = facenet.prewhiten(aligned)
         prewhitens.append(prewhiten)
         break
-    return (prewhitens, bounding_boxes)
+    return (prewhitens, bounding_boxes[:1])
 
 def embedding(images):
     # check is model exists

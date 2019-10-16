@@ -73,7 +73,8 @@ def search(request):
             "matcher_index": int(max_j),
             "bouding_box": bounding_boxes[i]
         })
-
+    print(dis)
+    print(sims)
     names = []
     for (i, sim) in enumerate(sims):
         if sim['is_indentified']:

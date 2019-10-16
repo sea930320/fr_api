@@ -16,9 +16,11 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
+from django.conf.urls import url
 from django.conf.urls.static import static
 
 from django.conf import settings
+from core.views import protected_image_serve
 
 # from django.conf.urls import url
 
@@ -27,6 +29,7 @@ urlpatterns = [
     path('api/', include('authentication.urls', namespace='authentication')),
     path('api/', include('dataset.urls', namespace='dataset')),
     path('api/face/', include('face.urls', namespace='face')),
+    url(r'^{}(?P<path>.*)$'.format(settings.MEDIA_URL[1:]), protected_image_serve)
 ]
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
