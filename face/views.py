@@ -10,6 +10,9 @@ import pickle
 import numpy as np
 from scipy import spatial
 from django.conf import settings
+from dataset.models import Dataset
+from authentication.serializers import UserSerializer
+from authentication.models import User
 
 # preprocess...
 with tf.Graph().as_default():
@@ -35,10 +38,10 @@ def search(request):
     (prewhitens, bounding_boxes) = facenet.align_opencv_face(pnet, rnet, onet, img)
 
     dataset_img_list = []
-    name_matcher = []
+    user_matcher = []
 
     print("[INFO] get prewhitens from datasets...")
-    datasets = request.user.user_datasets.all()
+    datasets = Dataset.objects.all()
     for dataset in datasets:
         dataset_imgs = dataset.images.all()
         for dataset_img in dataset_imgs:
@@ -48,7 +51,7 @@ def search(request):
                 di_prewhitens = aligns['prewhitens']
                 for di_prewhiten in di_prewhitens:
                     dataset_img_list.append(di_prewhiten)
-                    name_matcher.append(dataset.name)
+                    user_matcher.append(dataset.user.id)
 
     if len(dataset_img_list) == 0:
         raise ValidationError({"dataset": "couldn't find dataset, please upload dataset first."})
@@ -75,11 +78,12 @@ def search(request):
         })
     print(dis)
     print(sims)
-    names = []
+    users = []
     for (i, sim) in enumerate(sims):
         if sim['is_indentified']:
             matcher_index = sim['matcher_index']
-            names.append(name_matcher[matcher_index])
+            user_serializer = UserSerializer(User.objects.get(pk=user_matcher[matcher_index]))
+            users.append(user_serializer.data)
     print("[SUCCESS] Identify face")
 
-    return Response({"result": names})
+    return Response({"result": users})

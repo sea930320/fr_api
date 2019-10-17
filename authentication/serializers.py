@@ -2,6 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 
 from .models import User
+from dataset.serializers import DatasetSerializer
+
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """Serializers registration requests and creates a new user."""
@@ -18,15 +20,19 @@ class RegistrationSerializer(serializers.ModelSerializer):
     # request. Making `token` read-only handles that for us.
     token = serializers.CharField(max_length=255, read_only=True)
 
+    birthday = serializers.DateField()
+    gender = serializers.ChoiceField(choices=[0, 1, 2])
+
     class Meta:
         model = User
         # List all of the fields that could possibly be included in a request
         # or response, including fields specified explicitly above.
-        fields = ['email', 'username', 'password', 'token']
+        fields = ['email', 'username', 'password', 'token', 'gender', 'birthday']
 
     def create(self, validated_data):
         # Use the `create_user` method we wrote earlier to create a new user.
         return User.objects.create_user(**validated_data)
+
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.CharField(max_length=255)
@@ -88,6 +94,7 @@ class LoginSerializer(serializers.Serializer):
             'token': user.token
         }
 
+
 class UserSerializer(serializers.ModelSerializer):
     """Handles serialization and deserialization of User objects."""
 
@@ -101,11 +108,11 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True
     )
 
-    user_datasets = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    dataset = DatasetSerializer(many=False, read_only=True)
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'password', 'user_datasets')
+        fields = ('email', 'username', 'password', 'gender', 'birthday', 'dataset')
 
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password

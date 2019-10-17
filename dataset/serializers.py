@@ -7,8 +7,6 @@ import uuid
 import imghdr
 
 from .models import Dataset, Image
-from authentication.serializers import UserSerializer
-
 
 class Base64ImageField(serializers.ImageField):
 
@@ -56,35 +54,32 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class DatasetSerializer(serializers.ModelSerializer):
-    user = UserSerializer(many=False, read_only=True)
     images = ImageSerializer(many=True, read_only=True)
-
-    name = serializers.CharField(max_length=255, required=True)
 
     user_id = serializers.IntegerField(write_only=True, required=True)
     image = ImageSerializer(many=False, write_only=True, required=False)
 
     class Meta:
         model = Dataset
-        fields = ['pk', 'user', 'user_id', 'name', 'images', 'image']
+        fields = ['user_id', 'images', 'image']
 
-    def create(self, validated_data):
-        user_id = validated_data.get('user_id')
-        name = validated_data.get('name')
-        if Dataset.objects.filter(user_id=user_id, name=name).exists():
-            raise ValidationError("This person's name already exists, please use another name")
-        return Dataset.objects.create(**validated_data)
+    # def create(self, validated_data):
+    #     user_id = validated_data.get('user_id')
+    #     name = validated_data.get('name')
+    #     if Dataset.objects.filter(user_id=user_id, name=name).exists():
+    #         raise ValidationError("This person's name already exists, please use another name")
+    #     return Dataset.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         image_data = validated_data.pop('image', None)
 
-        for (key, value) in validated_data.items():
-            # For the keys remaining in `validated_data`, we will set them on
-            # the current `Dataset` instance one at a time.
-            if key == 'name':
-                if Dataset.objects.filter(user_id=instance.user_id, name=value).exclude(pk=instance.pk).exists():
-                    raise ValidationError("This person's name already exists, please use another name")
-            setattr(instance, key, value)
+        # for (key, value) in validated_data.items():
+        #     # For the keys remaining in `validated_data`, we will set them on
+        #     # the current `Dataset` instance one at a time.
+        #     if key == 'name':
+        #         if Dataset.objects.filter(user_id=instance.user_id, name=value).exclude(pk=instance.pk).exists():
+        #             raise ValidationError("This person's name already exists, please use another name")
+        #     setattr(instance, key, value)
 
         if image_data is not None:
             image_serializer = ImageSerializer(data=image_data)

@@ -19,7 +19,7 @@ class UserManager(BaseUserManager):
     to create `User` objects.
     """
 
-    def create_user(self, username, email, password=None):
+    def create_user(self, username, email, password=None, gender=0, birthday=None):
         """Create and return a `User` with an email, username and password."""
         if username is None:
             raise TypeError('Users must have a username.')
@@ -27,7 +27,7 @@ class UserManager(BaseUserManager):
         if email is None:
             raise TypeError('Users must have an email address.')
 
-        user = self.model(username=username, email=self.normalize_email(email))
+        user = self.model(username=username, email=self.normalize_email(email), gender=gender, birthday=birthday)
         user.set_password(password)
         user.save()
 
@@ -74,6 +74,8 @@ class User(AbstractBaseUser, PermissionsMixin, TimestampedModel):
 
 
     # More fields required by Django when specifying a custom user model.
+    gender = models.IntegerField(default=0, choices=((0, "Male"), (1, "Female"), (2, "Other")))
+    birthday = models.DateField(auto_now=False, null=True, blank=True)
 
     # The `USERNAME_FIELD` property tells us which field we will use to log in.
     # In this case we want it to be the email field.

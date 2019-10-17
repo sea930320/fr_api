@@ -4,12 +4,12 @@ from core.models import TimestampedModel
 
 class Dataset(TimestampedModel):
     # identify user who use this dataset
-    user = models.ForeignKey(
-        'authentication.User', on_delete=models.CASCADE, related_name="user_datasets"
+    user = models.OneToOneField(
+        'authentication.User', on_delete=models.CASCADE
     )
 
     # person's name of this dataset
-    name = models.CharField(max_length=256)
+    # name = models.CharField(max_length=256)
 
     # person's photos of this dataset
     images = models.ManyToManyField('Image', related_name="image_dataset")

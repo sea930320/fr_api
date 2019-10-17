@@ -24,9 +24,8 @@ def align_dataset_photo(sender, instance, action, reverse, model, pk_set, using,
             imageInstance = Image.objects.get(pk=pk)
             imagePath = imageInstance.image.path
 
-            print("[INFO] Alignment: [{}]'s dataset photo - [{}], created by [{}]".format(instance.name,
-                                                                                   imageInstance.image.url,
-                                                                                   instance.user.username))
+            print("[INFO] Alignment: [{}]'s dataset photo - [{}]".format(instance.user.username,
+                                                                                   imageInstance.image.url))
             (prewhitens, bounding_boxes) = facenet.align_face(pnet, rnet, onet, imagePath)
 
             encoded = pickle.dumps({
