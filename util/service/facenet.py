@@ -11,6 +11,17 @@ minsize = 20  # minimum size of face
 threshold = [0.6, 0.7, 0.7]  # three steps's threshold
 factor = 0.709  # scale factor
 
+home = os.path.abspath(os.path.dirname(__name__)) + '/core'
+model_path = home + '/.facenet_model/20180408-102900/20180408-102900.pb'
+facenet.load_model(model_path)
+
+# Get input and output tensors
+images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
+embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
+phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
+tf.Graph().as_default()
+sess = tf.Session()
+
 def align_face(pnet, rnet, onet, image, image_size=160, margin=11):
     img = cv2.imread(os.path.expanduser(image))[:, :, ::-1]
     img_size = np.asarray(img.shape)[0:2]
@@ -56,29 +67,11 @@ def align_opencv_face(pnet, rnet, onet, cvimg, image_size=160, margin=11):
     return (prewhitens, bounding_boxes[:1])
 
 def embedding(images):
-    # check is model exists
-    # home = expanduser('~')
-    home = os.path.abspath(os.path.dirname(__name__)) + '/core'
-    model_path = home + '/.facenet_model/20180408-102900/20180408-102900.pb'
-    if not os.path.exists(model_path):
-        print("model not exists, downloading model")
-        download_model.download()
-        print("model downloaded to " + model_path)
-
-    with tf.Graph().as_default():
-        with tf.Session() as sess:
-            facenet.load_model(model_path)
-
-            # Get input and output tensors
-            images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
-            embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
-            phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
-
-            # Run forward pass to calculate embeddings
-            feed_dict = {images_placeholder: images,
-                         phase_train_placeholder: False}
-            emb = sess.run(embeddings, feed_dict=feed_dict)
-
+    # facenet.load_model(model_path)
+    # Run forward pass to calculate embeddings
+    feed_dict = {images_placeholder: images,
+                 phase_train_placeholder: False}
+    emb = sess.run(embeddings, feed_dict=feed_dict)
     return emb
 
 
