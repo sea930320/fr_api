@@ -1,8 +1,17 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 
-from .models import User
-from dataset.serializers import DatasetSerializer
+from .models import User, WhatIValue
+from dataset.serializers import DatasetSerializer, ImageSerializer
+
+
+class WhatIValueSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length=255)
+    score = serializers.IntegerField()
+
+    class Meta:
+        model = WhatIValue
+        fields = ('pk', 'name', 'score')
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -23,15 +32,51 @@ class RegistrationSerializer(serializers.ModelSerializer):
     birthday = serializers.DateField()
     gender = serializers.ChoiceField(choices=[0, 1, 2])
 
+    photos = ImageSerializer(many=True)
+    avatar = ImageSerializer(many=False)
+    company = serializers.CharField(max_length=255, required=False)
+    bio = serializers.CharField(max_length=255, required=False)
+    my_style = serializers.CharField(max_length=255, required=False)
+    how_to_help_me = serializers.CharField(max_length=255, required=False)
+    what_i_values = WhatIValueSerializer(many=True, required=False)
+
     class Meta:
         model = User
         # List all of the fields that could possibly be included in a request
         # or response, including fields specified explicitly above.
-        fields = ['email', 'username', 'password', 'token', 'gender', 'birthday']
+        fields = ['email', 'username', 'password', 'token', 'gender', 'birthday', 'photos', 'avatar', 'company', 'bio',
+                  'my_style', 'how_to_help_me', 'what_i_values']
 
     def create(self, validated_data):
+        photos = validated_data.pop('photos', None)
+        avatar = validated_data.pop('avatar', None)
+        what_i_values = validated_data.pop('what_i_values', None)
+
         # Use the `create_user` method we wrote earlier to create a new user.
-        return User.objects.create_user(**validated_data)
+        instance = User.objects.create_user(**validated_data)
+
+        if photos is not None:
+            for photo in photos:
+                photo_serializer = ImageSerializer(data=photo)
+                photo_serializer.is_valid(raise_exception=True)
+                photo_instance = photo_serializer.save()
+                instance.photos.add(photo_instance)
+
+        if avatar is not None:
+            avatar_serializer = ImageSerializer(data=avatar)
+            avatar_serializer.is_valid(raise_exception=True)
+            avatar_instance = avatar_serializer.save()
+            instance.avatar = avatar_instance
+
+        if what_i_values is not None:
+            for what_i_value in what_i_values:
+                what_i_value_serializer = WhatIValueSerializer(data=what_i_value)
+                what_i_value_serializer.is_valid(raise_exception=True)
+                what_i_value_instance = what_i_value_serializer.save()
+                instance.what_i_values.add(what_i_value_instance)
+
+        instance.save()
+        return instance
 
 
 class LoginSerializer(serializers.Serializer):
@@ -108,11 +153,16 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True
     )
 
-    dataset = DatasetSerializer(many=False, read_only=True)
+    dataset = DatasetSerializer(many=False)
+    photos = ImageSerializer(many=True)
+    avatar = ImageSerializer(many=False)
+    what_i_values = WhatIValueSerializer(many=True, required=False)
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'password', 'gender', 'birthday', 'dataset')
+        fields = (
+        'email', 'username', 'password', 'gender', 'birthday', 'dataset', 'photos', 'avatar', 'company', 'bio',
+        'my_style', 'how_to_help_me', 'what_i_values')
 
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password
@@ -132,6 +182,9 @@ class UserSerializer(serializers.ModelSerializer):
         # we need to remove the password field from the
         # `validated_data` dictionary before iterating over it.
         password = validated_data.pop('password', None)
+        photos = validated_data.pop('photos', None)
+        avatar = validated_data.pop('avatar', None)
+        what_i_values = validated_data.pop('what_i_values', None)
 
         for (key, value) in validated_data.items():
             # For the keys remaining in `validated_data`, we will set them on
@@ -143,6 +196,31 @@ class UserSerializer(serializers.ModelSerializer):
             # of the security stuff that we shouldn't be concerned with.
             instance.set_password(password)
 
+        if photos is not None:
+            instance.photos.all().delete()
+            for photo in photos:
+                photo_serializer = ImageSerializer(data=photo)
+                photo_serializer.is_valid(raise_exception=True)
+                photo_instance = photo_serializer.save()
+                instance.photos.add(photo_instance)
+
+        if avatar is not None:
+            if instance.avatar is not None:
+                instance.avatar.delete()
+            avatar_serializer = ImageSerializer(data=avatar)
+            avatar_serializer.is_valid(raise_exception=True)
+            avatar_instance = avatar_serializer.save()
+            instance.avatar = avatar_instance
+
+        if what_i_values is not None:
+            instance.what_i_values.all().delete()
+            for what_i_value in what_i_values:
+                what_i_value_serializer = WhatIValueSerializer(data=what_i_value)
+                what_i_value_serializer.is_valid(raise_exception=True)
+                what_i_value_instance = what_i_value_serializer.save()
+                instance.what_i_values.add(what_i_value_instance)
+
+        instance.save()
         # After everything has been updated we must explicitly save
         # the model. It's worth pointing out that `.set_password()` does not
         # save the model.

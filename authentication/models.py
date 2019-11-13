@@ -8,6 +8,8 @@ from django.contrib.auth.models import (
 )
 from django.db import models
 from core.models import TimestampedModel
+from dataset.models import Image
+
 
 class UserManager(BaseUserManager):
     """
@@ -19,7 +21,8 @@ class UserManager(BaseUserManager):
     to create `User` objects.
     """
 
-    def create_user(self, username, email, password=None, gender=0, birthday=None):
+    def create_user(self, username, email, password=None, gender=0, birthday=None, company=None, bio=None,
+                    my_style=None, how_to_help_me=None):
         """Create and return a `User` with an email, username and password."""
         if username is None:
             raise TypeError('Users must have a username.')
@@ -27,7 +30,8 @@ class UserManager(BaseUserManager):
         if email is None:
             raise TypeError('Users must have an email address.')
 
-        user = self.model(username=username, email=self.normalize_email(email), gender=gender, birthday=birthday)
+        user = self.model(username=username, email=self.normalize_email(email), gender=gender, birthday=birthday,
+                          company=company, bio=bio, my_style=my_style, how_to_help_me=how_to_help_me)
         user.set_password(password)
         user.save()
 
@@ -46,6 +50,19 @@ class UserManager(BaseUserManager):
         user.save()
 
         return user
+
+
+class WhatIValue(TimestampedModel):
+    # name of whativalue
+    name = models.CharField(max_length=256)
+
+    # score of whativalue
+    score = models.IntegerField()
+
+    # Django is using this method to display an object in the Django admin site
+    def __str__(self):
+        return self.name
+
 
 class User(AbstractBaseUser, PermissionsMixin, TimestampedModel):
     # Each `User` needs a human-readable unique identifier that we can use to
@@ -72,10 +89,19 @@ class User(AbstractBaseUser, PermissionsMixin, TimestampedModel):
     # false.
     is_staff = models.BooleanField(default=False)
 
-
     # More fields required by Django when specifying a custom user model.
     gender = models.IntegerField(default=0, choices=((0, "Male"), (1, "Female"), (2, "Other")))
     birthday = models.DateField(auto_now=False, null=True, blank=True)
+
+    photos = models.ManyToManyField(Image, related_name="photo_user")
+    avatar = models.OneToOneField(
+        Image, on_delete=models.SET_NULL, default=None, null=True, blank=True
+    )
+    company = models.CharField(max_length=255, default=None, null=True, blank=True)
+    bio = models.CharField(max_length=255, default=None, null=True, blank=True)
+    my_style = models.CharField(max_length=255, default=None, null=True, blank=True)
+    how_to_help_me = models.CharField(max_length=255, default=None, null=True, blank=True)
+    what_i_values = models.ManyToManyField(WhatIValue, related_name="what_i_value_user")
 
     # The `USERNAME_FIELD` property tells us which field we will use to log in.
     # In this case we want it to be the email field.
