@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 
 from .models import User, WhatIValue
+from dataset.models import Dataset
 from dataset.serializers import DatasetSerializer, ImageSerializer
 
 
@@ -32,9 +33,11 @@ class RegistrationSerializer(serializers.ModelSerializer):
     birthday = serializers.DateField()
     gender = serializers.ChoiceField(choices=[0, 1, 2])
 
-    photos = ImageSerializer(many=True)
-    avatar = ImageSerializer(many=False)
-    company = serializers.CharField(max_length=255, required=False)
+    dataset = DatasetSerializer(many=False, read_only=True)
+    photos = ImageSerializer(many=True, write_only=True)
+    avatar = ImageSerializer(many=False, required=False)
+    position = serializers.CharField(max_length=255)
+    company = serializers.CharField(max_length=255)
     bio = serializers.CharField(max_length=255, required=False)
     my_style = serializers.CharField(max_length=255, required=False)
     how_to_help_me = serializers.CharField(max_length=255, required=False)
@@ -44,8 +47,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
         model = User
         # List all of the fields that could possibly be included in a request
         # or response, including fields specified explicitly above.
-        fields = ['email', 'username', 'password', 'token', 'gender', 'birthday', 'photos', 'avatar', 'company', 'bio',
-                  'my_style', 'how_to_help_me', 'what_i_values']
+        fields = ['email', 'username', 'password', 'token', 'gender', 'birthday', 'dataset', 'photos', 'avatar',
+                  'position', 'company', 'bio', 'my_style', 'how_to_help_me', 'what_i_values']
 
     def create(self, validated_data):
         photos = validated_data.pop('photos', None)
@@ -54,13 +57,15 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
         # Use the `create_user` method we wrote earlier to create a new user.
         instance = User.objects.create_user(**validated_data)
+        instance.dataset = Dataset.objects.create(user=instance)
 
         if photos is not None:
             for photo in photos:
                 photo_serializer = ImageSerializer(data=photo)
                 photo_serializer.is_valid(raise_exception=True)
                 photo_instance = photo_serializer.save()
-                instance.photos.add(photo_instance)
+                # instance.photos.add(photo_instance)
+                instance.dataset.images.add(photo_instance)
 
         if avatar is not None:
             avatar_serializer = ImageSerializer(data=avatar)
@@ -154,15 +159,15 @@ class UserSerializer(serializers.ModelSerializer):
     )
 
     dataset = DatasetSerializer(many=False)
-    photos = ImageSerializer(many=True)
-    avatar = ImageSerializer(many=False)
+    photos = ImageSerializer(many=True, write_only=True)
+    avatar = ImageSerializer(many=False, required=False)
     what_i_values = WhatIValueSerializer(many=True, required=False)
 
     class Meta:
         model = User
         fields = (
-        'email', 'username', 'password', 'gender', 'birthday', 'dataset', 'photos', 'avatar', 'company', 'bio',
-        'my_style', 'how_to_help_me', 'what_i_values')
+            'email', 'username', 'password', 'gender', 'birthday', 'dataset', 'photos', 'avatar', 'company', 'bio',
+            'position', 'my_style', 'how_to_help_me', 'what_i_values')
 
         # The `read_only_fields` option is an alternative for explicitly
         # specifying the field with `read_only=True` like we did for password
@@ -197,12 +202,12 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
 
         if photos is not None:
-            instance.photos.all().delete()
+            instance.dataset.images.all().delete()
             for photo in photos:
                 photo_serializer = ImageSerializer(data=photo)
                 photo_serializer.is_valid(raise_exception=True)
                 photo_instance = photo_serializer.save()
-                instance.photos.add(photo_instance)
+                instance.dataset.images.add(photo_instance)
 
         if avatar is not None:
             if instance.avatar is not None:
@@ -220,7 +225,6 @@ class UserSerializer(serializers.ModelSerializer):
                 what_i_value_instance = what_i_value_serializer.save()
                 instance.what_i_values.add(what_i_value_instance)
 
-        instance.save()
         # After everything has been updated we must explicitly save
         # the model. It's worth pointing out that `.set_password()` does not
         # save the model.
