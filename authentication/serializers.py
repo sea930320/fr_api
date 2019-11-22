@@ -47,7 +47,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         model = User
         # List all of the fields that could possibly be included in a request
         # or response, including fields specified explicitly above.
-        fields = ['email', 'username', 'password', 'token', 'gender', 'birthday', 'dataset', 'photos', 'avatar',
+        fields = ['email', 'firstname', 'lastname', 'password', 'token', 'gender', 'birthday', 'dataset', 'photos', 'avatar',
                   'position', 'company', 'bio', 'my_style', 'how_to_help_me', 'what_i_values']
 
     def create(self, validated_data):
@@ -86,7 +86,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.CharField(max_length=255)
-    username = serializers.CharField(max_length=255, read_only=True)
+    firstname = serializers.CharField(max_length=255, read_only=True)
+    lastname = serializers.CharField(max_length=255, read_only=True)
     password = serializers.CharField(max_length=128, write_only=True)
     token = serializers.CharField(max_length=255, read_only=True)
 
@@ -140,7 +141,8 @@ class LoginSerializer(serializers.Serializer):
         # that we will see later on.
         return {
             'email': user.email,
-            'username': user.username,
+            'firstname': user.firstname,
+            'lastname': user.lastname,
             'token': user.token
         }
 
@@ -166,7 +168,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'email', 'username', 'password', 'gender', 'birthday', 'dataset', 'photos', 'avatar', 'company', 'bio',
+            'email', 'firstname', 'lastname', 'password', 'gender', 'birthday', 'dataset', 'photos', 'avatar', 'company', 'bio',
             'position', 'my_style', 'how_to_help_me', 'what_i_values')
 
         # The `read_only_fields` option is an alternative for explicitly

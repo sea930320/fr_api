@@ -21,30 +21,33 @@ class UserManager(BaseUserManager):
     to create `User` objects.
     """
 
-    def create_user(self, username, email, password=None, gender=0, birthday=None, position=None, company=None,
+    def create_user(self, firstname, lastname, email, password=None, gender=0, birthday=None, position=None, company=None,
                     bio=None, my_style=None, how_to_help_me=None):
-        """Create and return a `User` with an email, username and password."""
-        if username is None:
-            raise TypeError('Users must have a username.')
+        """Create and return a `User` with an email, firstname, lastname and password."""
+        if firstname is None:
+            raise TypeError('Users must have a fist name.')
+
+        if lastname is None:
+            raise TypeError('Users must have a last name.')
 
         if email is None:
             raise TypeError('Users must have an email address.')
 
-        user = self.model(username=username, email=self.normalize_email(email), gender=gender, birthday=birthday,
+        user = self.model(firstname=firstname, lastname=lastname, email=self.normalize_email(email), gender=gender, birthday=birthday,
                           position=position, company=company, bio=bio, my_style=my_style, how_to_help_me=how_to_help_me)
         user.set_password(password)
         user.save()
 
         return user
 
-    def create_superuser(self, username, email, password):
+    def create_superuser(self, firstname, lastname, email, password):
         """
         Create and return a `User` with superuser (admin) permissions.
         """
         if password is None:
             raise TypeError('Superusers must have a password.')
 
-        user = self.create_user(username, email, password)
+        user = self.create_user(firstname, lastname, email, password)
         user.is_superuser = True
         user.is_staff = True
         user.save()
@@ -68,7 +71,8 @@ class User(AbstractBaseUser, PermissionsMixin, TimestampedModel):
     # Each `User` needs a human-readable unique identifier that we can use to
     # represent the `User` in the UI. We want to index this column in the
     # database to improve lookup performance.
-    username = models.CharField(db_index=True, max_length=255, unique=True)
+    firstname = models.CharField(max_length=255)
+    lastname = models.CharField(max_length=255)
 
     # We also need a way to contact the user and a way for the user to identify
     # themselves when logging in. Since we need an email address for contacting
@@ -107,7 +111,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimestampedModel):
     # The `USERNAME_FIELD` property tells us which field we will use to log in.
     # In this case we want it to be the email field.
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
+    REQUIRED_FIELDS = ['firstname', 'lastname']
 
     # Tells Django that the UserManager class defined above should manage
     # objects of this type.
@@ -138,7 +142,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimestampedModel):
         Typically this would be the user's first and last name. Since we do
         not store the user's real name, we return their username instead.
         """
-        return self.username
+        return self.firstname + "" + self.lastname
 
     def get_short_name(self):
         """
@@ -146,7 +150,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimestampedModel):
         Typically, this would be the user's first name. Since we do not store
         the user's real name, we return their username instead.
         """
-        return self.username
+        return self.firstname
 
     def _generate_jwt_token(self):
         """
